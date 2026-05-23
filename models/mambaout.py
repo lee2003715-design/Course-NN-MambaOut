@@ -269,7 +269,8 @@ def mambaout_femto(pretrained=False, **kwargs):
     if pretrained:
         state_dict = torch.hub.load_state_dict_from_url(
             url= model.default_cfg['url'], map_location="cpu", check_hash=True)
-        model.load_state_dict(state_dict)
+        # model.load_state_dict(state_dict)
+        model.load_state_dict(state_dict, strict=False)
     return model
 
 
@@ -284,7 +285,8 @@ def mambaout_kobe(pretrained=False, **kwargs):
     if pretrained:
         state_dict = torch.hub.load_state_dict_from_url(
             url= model.default_cfg['url'], map_location="cpu", check_hash=True)
-        model.load_state_dict(state_dict)
+        # model.load_state_dict(state_dict)
+        model.load_state_dict(state_dict, strict=False)
     return model
 
 
@@ -295,10 +297,19 @@ def mambaout_tiny(pretrained=False, **kwargs):
         dims=[96, 192, 384, 576],
         **kwargs)
     model.default_cfg = default_cfgs['mambaout_tiny']
+    # if pretrained:
+    #     state_dict = torch.hub.load_state_dict_from_url(
+    #         url= model.default_cfg['url'], map_location="cpu", check_hash=True)
+    #     # model.load_state_dict(state_dict)
+    #     model.load_state_dict(state_dict, strict=False)
     if pretrained:
         state_dict = torch.hub.load_state_dict_from_url(
-            url= model.default_cfg['url'], map_location="cpu", check_hash=True)
-        model.load_state_dict(state_dict)
+            url=model.default_cfg['url'], map_location="cpu", check_hash=True)
+
+        del state_dict['head.fc2.weight']
+        del state_dict['head.fc2.bias']
+
+        model.load_state_dict(state_dict, strict=False)
     return model
 
 
@@ -312,7 +323,8 @@ def mambaout_small(pretrained=False, **kwargs):
     if pretrained:
         state_dict = torch.hub.load_state_dict_from_url(
             url= model.default_cfg['url'], map_location="cpu", check_hash=True)
-        model.load_state_dict(state_dict)
+        # model.load_state_dict(state_dict)
+        model.load_state_dict(state_dict, strict=False)
     return model
 
 
@@ -326,5 +338,6 @@ def mambaout_base(pretrained=False, **kwargs):
     if pretrained:
         state_dict = torch.hub.load_state_dict_from_url(
             url= model.default_cfg['url'], map_location="cpu", check_hash=True)
-        model.load_state_dict(state_dict)
+        # model.load_state_dict(state_dict)
+        model.load_state_dict(state_dict, strict=False)
     return model
