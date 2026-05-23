@@ -126,27 +126,18 @@ Model loaded!
 ## 訓練指令
 
 ```bash
-python train.py data/ImageNet100 --model mambaout_tiny --pretrained --num-classes 100 -b 32 --epochs 10 --lr 1e-4 --img-size 224 --workers 4 --amp --output outputs --experiment test_run
+python train_imagenet.py data/ImageNet100 --model mambaout_tiny --pretrained --num-classes 100 -b 32 --epochs 10 --lr 1e-4 --img-size 224 --workers 4 --amp --output outputs --experiment test_run
 ```
 
 ---
 
 ## 修改內容
 
-由於官方 pretrained weights 為 ImageNet-1K 的 1000 類分類頭，因此本研究於載入 checkpoint 時移除：
-
-```python
-head.fc2.weight
-head.fc2.bias
-```
-
-並使用：
+由於官方 pretrained weights 為 ImageNet-1K 的 1000 類分類模型，因此本研究於載入 checkpoint 時移除原始 classification head 權重，並使用：
 
 ```python
 strict=False
 ```
-
-以重新建立 ImageNet-100 的 100 類分類頭。
 
 ---
 
