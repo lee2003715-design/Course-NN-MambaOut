@@ -128,7 +128,7 @@ def main():
     sub_names = [class_names[i] for i in top_indices]
 
     fig, ax = plt.subplots(figsize=(14, 12))
-    im = ax.imshow(sub_mat)
+    im = ax.imshow(sub_mat, cmap="Blues", vmin=0, vmax=1)
 
     ax.set_xticks(np.arange(args.top_k))
     ax.set_yticks(np.arange(args.top_k))
@@ -143,7 +143,12 @@ def main():
         for j in range(args.top_k):
             value = sub_mat[i, j]
             if value > 0.01:
-                ax.text(j, i, f"{value:.2f}", ha="center", va="center", fontsize=7)
+                text_color = "white" if value > 0.5 else "black"
+                ax.text(
+                    j, i, f"{value:.2f}",
+                    ha="center", va="center",
+                    fontsize=7, color=text_color
+                )
 
     plt.colorbar(im)
     plt.tight_layout()
