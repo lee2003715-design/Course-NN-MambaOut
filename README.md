@@ -79,8 +79,8 @@ data/
 | 1 | ImageNet-100 Scratch Reproduction | MambaOut-Tiny | ImageNet-100 | 300 | **88.18%** |
 | 2 | Short-run Architecture Ablation | MambaOut-Tiny-ECA | ImageNet-100 | 50 | **82.22%** |
 | 3 | Full Architecture Training | MambaOut-Tiny-ECA | ImageNet-100 | 300 | **87.84%** |
-| 4 | Cross-Dataset Transfer Baseline | MambaOut-Tiny | ImageNet-100 50ep  checkpoint → CIFAR-100 | 50 | **86.28%** |
-| 5 | Cross-Dataset Transfer with Improved Architecture | MambaOut-Tiny-ECA | ImageNet-100 300ep  checkpoint → CIFAR-100 | 50 | **81.83%** |
+| 4 | Cross-Dataset Transfer Baseline | MambaOut-Tiny | ImageNet-100 50ep checkpoint → CIFAR-100 | 50 | **86.28%** |
+| 5 | Cross-Dataset Transfer with Improved Architecture | MambaOut-Tiny-ECA | ImageNet-100 300ep checkpoint → CIFAR-100 | 50 | **81.83%** |
 
 ---
 
@@ -172,10 +172,10 @@ python train.py data/ImageNet100 --model mambaout_tiny_eca --num-classes 100 --t
 
 ### Result
 
-| Model | Dataset | Epochs | Best Top-1 | Best Epoch | Final Top-1 |
-|---|---|---:|---:|---:|---:|
-| MambaOut-Tiny | ImageNet-100 | 300 | **88.18%** | 306 | 87.94% |
-| MambaOut-Tiny-ECA | ImageNet-100 | 300 | **87.84%** | 265 | 87.52% |
+| Model | Dataset | Epochs | Best Top-1 | Final Top-1 |
+|---|---|---:|---:|---:|
+| MambaOut-Tiny | ImageNet-100 | 300 | **88.18%** | 87.94% |
+| MambaOut-Tiny-ECA | ImageNet-100 | 300 | **87.84%** | 87.52% |
 
 ### Analysis
 
@@ -296,7 +296,7 @@ figures/
 python plot_confusion_matrix_transfer.py --model mambaout_tiny_eca --checkpoint-path ./output/cifar100_transfer_mambaout_tiny_eca_300ep/model_best.pth.tar --data-root ./data --output-dir ./figures
 ```
 
-輸出：
+輸出藍色風格的 normalized confusion matrix：
 
 ```text
 figures/cifar100_confusion_matrix_mambaout_tiny_eca_top20.png
