@@ -42,5 +42,6 @@ __pycache__/
 
 # OS
 .DS_Store
-Thumbs.db*_backup.py
+Thumbs.db
+*_backup.py
 structure.txt
