@@ -31,6 +31,8 @@ default_cfgs = {
         url='https://github.com/yuweihao/MambaOut/releases/download/model/mambaout_kobe.pth'),
     'mambaout_tiny': _cfg(
         url='https://github.com/yuweihao/MambaOut/releases/download/model/mambaout_tiny.pth'),
+    'mambaout_tiny_eca': _cfg(
+        url=''),
     'mambaout_small': _cfg(
         url='https://github.com/yuweihao/MambaOut/releases/download/model/mambaout_small.pth'),
     'mambaout_base': _cfg(
@@ -116,6 +118,52 @@ class MlpHead(nn.Module):
         return x
 
 
+class ECALayer(nn.Module):
+    """
+    Efficient Channel Attention (ECA) layer.
+
+    MambaOut uses NHWC tensors inside blocks: [B, H, W, C].
+    This implementation also supports NCHW tensors: [B, C, H, W],
+    so it is safe for debugging or future reuse.
+    """
+    def __init__(self, channels, k_size=3):
+        super().__init__()
+        self.channels = channels
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.conv = nn.Conv1d(
+            in_channels=1,
+            out_channels=1,
+            kernel_size=k_size,
+            padding=(k_size - 1) // 2,
+            bias=False
+        )
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        # NHWC format: [B, H, W, C], used inside MambaOut blocks
+        if x.dim() == 4 and x.shape[-1] == self.channels:
+            x_nchw = x.permute(0, 3, 1, 2).contiguous()
+            y = self.avg_pool(x_nchw)                    # [B, C, 1, 1]
+            y = y.squeeze(-1).transpose(-1, -2)          # [B, 1, C]
+            y = self.conv(y)
+            y = self.sigmoid(y).transpose(-1, -2).unsqueeze(-1)
+            y = y.permute(0, 2, 3, 1).contiguous()       # [B, 1, 1, C]
+            return x * y
+
+        # NCHW format: [B, C, H, W]
+        if x.dim() == 4 and x.shape[1] == self.channels:
+            y = self.avg_pool(x)                         # [B, C, 1, 1]
+            y = y.squeeze(-1).transpose(-1, -2)          # [B, 1, C]
+            y = self.conv(y)
+            y = self.sigmoid(y).transpose(-1, -2).unsqueeze(-1)
+            return x * y
+
+        raise RuntimeError(
+            f"ECALayer expected channel dimension {self.channels}, "
+            f"but got input shape {x.shape}"
+        )
+
+
 class GatedCNNBlock(nn.Module):
     r""" Our implementation of Gated CNN Block: https://arxiv.org/pdf/1612.08083
     Args: 
@@ -128,6 +176,7 @@ class GatedCNNBlock(nn.Module):
                  norm_layer=partial(nn.LayerNorm,eps=1e-6), 
                  act_layer=nn.GELU,
                  drop_path=0.,
+                 use_eca=False,
                  **kwargs):
         super().__init__()
         self.norm = norm_layer(dim)
@@ -138,6 +187,7 @@ class GatedCNNBlock(nn.Module):
         self.split_indices = (hidden, hidden - conv_channels, conv_channels)
         self.conv = nn.Conv2d(conv_channels, conv_channels, kernel_size=kernel_size, padding=kernel_size//2, groups=conv_channels)
         self.fc2 = nn.Linear(hidden, dim)
+        self.eca = ECALayer(dim) if use_eca else nn.Identity()
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
 
     def forward(self, x):
@@ -148,6 +198,7 @@ class GatedCNNBlock(nn.Module):
         c = self.conv(c)
         c = c.permute(0, 2, 3, 1) # [B, C, H, W] -> [B, H, W, C]
         x = self.fc2(self.act(g) * torch.cat((i, c), dim=-1))
+        x = self.eca(x)
         x = self.drop_path(x)
         return x + shortcut
 
@@ -187,7 +238,8 @@ class MambaOut(nn.Module):
                  drop_path_rate=0.,
                  output_norm=partial(nn.LayerNorm, eps=1e-6), 
                  head_fn=MlpHead,
-                 head_dropout=0.0, 
+                 head_dropout=0.0,
+                 use_eca=False,
                  **kwargs,
                  ):
         super().__init__()
@@ -220,6 +272,7 @@ class MambaOut(nn.Module):
                 kernel_size=kernel_size,
                 conv_ratio=conv_ratio,
                 drop_path=dp_rates[cur + j],
+                use_eca=use_eca,
                 ) for j in range(depths[i])]
             )
             self.stages.append(stage)
@@ -310,6 +363,34 @@ def mambaout_tiny(pretrained=False, **kwargs):
         del state_dict['head.fc2.bias']
 
         model.load_state_dict(state_dict, strict=False)
+    return model
+
+
+
+
+@register_model
+def mambaout_tiny_eca(pretrained=False, **kwargs):
+    """
+    MambaOut-Tiny with Efficient Channel Attention inserted into each GatedCNNBlock.
+
+    Note:
+    - This variant is intended for architecture-improvement experiments.
+    - Pretrained weights are not provided for this modified architecture.
+    - Use scratch training or load checkpoints trained with this same architecture.
+    """
+    model = MambaOut(
+        depths=[3, 3, 9, 3],
+        dims=[96, 192, 384, 576],
+        use_eca=True,
+        **kwargs)
+    model.default_cfg = default_cfgs['mambaout_tiny_eca']
+
+    if pretrained:
+        raise ValueError(
+            "mambaout_tiny_eca has no official pretrained weights. "
+            "Please train from scratch or use --initial-checkpoint with a "
+            "checkpoint trained from mambaout_tiny_eca."
+        )
     return model
 
 

@@ -3,15 +3,17 @@ __pycache__/
 *.pyc
 *.pyo
 
-# Virtual environment
+# Virtual environments
 /my_venv/
 /venv/
+.venv/
 
 # Dataset
 /data/
 /datasets/
 
-# Outputs
+# Training outputs / checkpoints
+/output/
 /outputs/
 /runs/
 /logs/
@@ -22,12 +24,21 @@ __pycache__/
 *.ckpt
 *.bin
 *.safetensors
+*.pth.tar
 
-# VSCode
-.vscode/
+# Large archives
+*.tar
+*.zip
+*.gz
+
+# Ignore old figure folder
+/figures/0523/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# VSCode
+.vscode/
 
 # OS
 .DS_Store
