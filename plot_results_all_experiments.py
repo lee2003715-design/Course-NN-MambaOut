@@ -119,12 +119,15 @@ EXPERIMENTS = {
     "Original ImageNet-100 Scratch": "mambaout_tiny_imagenet100_scratch",
     "ECA ImageNet-100 50ep": "mambaout_tiny_eca_imagenet100_50ep",
     "ECA ImageNet-100 300ep": "mambaout_tiny_eca_imagenet100_scratch_300ep",
-    "Original CIFAR-100 Transfer": "cifar100_transfer_mambaout_tiny_eca",  # change label if this folder is original baseline
+    "Original CIFAR-100 Transfer 300ep": "cifar100_transfer_mambaout_tiny_300ep",
     "ECA CIFAR-100 Transfer 300ep": "cifar100_transfer_mambaout_tiny_eca_300ep",
 }
 
 data = {name: load_summary(folder) for name, folder in EXPERIMENTS.items()}
-
+if data.get("Original ImageNet-100 Scratch") is not None:
+    data["Original ImageNet-100 Scratch"] = data["Original ImageNet-100 Scratch"][
+        data["Original ImageNet-100 Scratch"]["epoch"] <= 300
+    ].copy()
 
 # ============================================================
 # 1. Individual curves
@@ -190,7 +193,7 @@ if orig is not None and eca50 is not None:
 # ============================================================
 
 cifar_series = []
-for label in ["Original CIFAR-100 Transfer", "ECA CIFAR-100 Transfer 300ep"]:
+for label in ["Original CIFAR-100 Transfer 300ep", "ECA CIFAR-100 Transfer 300ep"]:
     df = data.get(label)
     if df is None:
         continue
@@ -217,11 +220,11 @@ bar_values = []
 
 # Manually include known results when needed.
 known_results = {
-    "Fine-tuning ImageNet-100": 89.72,
     "Original ImageNet-100 Scratch": 88.18,
-    "Original CIFAR-100 Transfer": 86.28,
-    "ECA CIFAR-100 Transfer 50ep Source": 77.33,
-    "ECA CIFAR-100 Transfer 300ep Source": 81.83,
+    "ECA ImageNet-100 50ep": 82.22,
+    "ECA ImageNet-100 300ep": 87.84,
+    "Original CIFAR-100 Transfer 300ep": 82.01,
+    "ECA CIFAR-100 Transfer 300ep": 81.83,
 }
 
 for label, value in known_results.items():
